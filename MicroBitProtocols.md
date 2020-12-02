@@ -11,7 +11,7 @@
 ## <a name="sharedBLE"></a>BLE Protocol for Stand-Alone micro:bit
 
 #### Advertising Name:
-MBXXXXX (Where XXXXX is the last 5 characters of the mac address. The first two letters change to BB for Hummingbird Bit, HB or HM for Hummingbird Duo, and FN for Finch 2.0)
+MBXXXXX (Where XXXXX is the last 5 characters of the mac address. The first two letters change to BB for Hummingbird Bit and FN for Finch 2.0)
 
 #### UUIDs:
 - Service UUID: 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
@@ -203,7 +203,7 @@ Values:
 - Shake: 1 if the micro:bit is being shaken
 
 Compass Calibration Check:
-While the compass is calibrating, notifications will be paused completely. Notifications start again when calibration is complete and will now include the result. To ensure you do not read an old calibration result, one could look for the notifications to pause and resume, but it is usually sufficient to just wait a bit (maybe half a second) after you send the calibration start command before trying to read a result. Results are presented as follows:
+While the compass is calibrating, notifications will be paused completely. Notifications start again when calibration is complete and will now include the calibration result. It takes a short amount of time for the calibration to begin after the calibrate command is sent. Therefore, you will want to either look for notifications to pause and resume, or simply wait about half a second before trying to read a result. Results are presented as follows:
 
 CCM | CCL | Result
 --- | --- | ---
