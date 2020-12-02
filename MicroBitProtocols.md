@@ -10,29 +10,29 @@
 
 ## <a name="sharedBLE"></a>BLE Protocol for Stand-Alone micro:bit
 
-##### Advertising Name:
+#### Advertising Name:
 MBXXXXX (Where XXXXX is the last 5 characters of the mac address. The first two letters change to BB for Hummingbird Bit, HB or HM for Hummingbird Duo, and FN for Finch 2.0)
 
-##### UUIDs:
+#### UUIDs:
 - Service UUID: 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
 - Write UUID (TX characteristic): 6E400002-B5A3-F393-E0A9-E50E24DCCA9E
 - Notify UUID (RX characteristic): 6E400003-B5A3-F393-E0A9-E50E24DCCA9E
 
-##### Connection interval:
+#### Connection interval:
 20 -- 70 ms
 
-##### Slave latency:
+#### Slave latency:
 0\
 Supervision Timeout -- 4 seconds
 
-##### Baudrate:
+#### Baudrate:
 115200
 
-##### General Notes:
-- The status LED will be attached to voltage. It will blink if voltage drops below 4.7V and be steady -- Above 4.7V.
+#### General Notes:
+- The status LED will be attached to voltage. It will blink if voltage drops below 4.7V and be steady above 4.7V.
 
 
-##### LED Array Command:
+#### LED Array Command:
 This command sets the screen on the micro:bit. There are two different versions of the command: flash and symbol. In flash, you give a string of 8 bit unicode characters to flash across the screen. Symbol sets the individual LEDs in the array to a given state. This command ranges in length from 2 to 20 bytes.
 
 Format:
@@ -84,7 +84,7 @@ Example - Stop flashing or clear the screen. You could turn the screen off simpl
 --- | --- | --- | --- | ---
 
 
-##### micro:bit I/O Command:
+#### micro:bit I/O Command:
 For stand-along micro:bit ONLY, this command will send directly to the pads. Pad0 supports a buzzer.
 
 Format:
@@ -141,20 +141,20 @@ Next make Pad2 as input:
 
 
 
-##### Stop All Command:
+#### Stop All Command:
 This command will clear the LED array. If used with a Hummingbird Bit, it will also switch off the servos, LEDs, and buzzer. The Finch 2.0 has a similar command (but will not recognize this same command).
 
 0xCB | 0xFF | 0xFF | 0xFF
 --- | --- | --- | ---
 
 
-##### Calibrate Magnetometer Command:
+#### Calibrate Magnetometer Command:
 This command will start the magnetometer calibration. Results are received with the rest of the notifications.
 
 0xCE | 0xFF | 0xFF | 0xFF
 --- | --- | --- | ---
 
-##### Send Firmware Version Command:
+#### Send Firmware Version Command:
 This command will cause a one time response containing the current firmware version information. SAMD Firmware Version is specific to the Hummingbird Bit board.
 
 0xCF | 0xFF | 0xFF | 0xFF
@@ -166,7 +166,7 @@ Hardware Version | micro:bit Firmware Version | SAMD Firmware Version
 --- | --- | ---
 
 
-##### Notifications:
+#### Notifications:
 Sensor data can be received as periodic notifications.
 
 Start Notifications Command:
@@ -218,10 +218,10 @@ Notes:
 ## <a name="BitBLE"></a>BLE Protocol specific to Hummingbird Bit
 The Hummingbird Bit inherits from the stand-alone micro:bit, with the addition of that which is listed below:
 
-##### Advertising Name:
+#### Advertising Name:
 BBXXXXX
 
-##### Set All Command:
+#### Set All Command:
 For most applications, you will want to use this combined command to set the robot state. This allows for a reduction in the number of commands sent overall. Despite the name, this command does not set everything - the LED array on the micro:bit must be set separately.
 
 Format (19 bytes):
@@ -252,7 +252,7 @@ Values:
  0xCA | 0x00 | 0xFF | 0x00 | 0x00 | 0xFF | 0x00 | 0xFF | 0x00 | 0xFE | 0xFF | 0xFF | 0xFF | 0x00 | 0x00 | 0x09 | 0xC4 | 0x00 | 0x1E
  --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 
-##### LED Commands
+#### LED Commands
 Intensities range in value from 0x00 to 0xFF (0 to 255).
 
 Format:
@@ -270,7 +270,7 @@ Example - Light LED2 with mid intensity:
 0xC1 | 0x55 | 0xFF | 0xFF
 --- | --- | --- | ---
 
-##### Tri-LED Commands
+#### Tri-LED Commands
 Intensities range in value from 0x00 to 0xFF (0 to 255).
 
 Format:
@@ -287,7 +287,7 @@ Example - Set Tri-LED2 to BirdBrain teal:
 0xC5 | 0x08 | 0x9B | 0xAB
 --- | --- | --- | ---
 
-##### Servo Commands
+#### Servo Commands
 Value (to set angle or speed) ranges from 0x00 to 0xFE. 0xFF is an off state.
 
 Format:
@@ -306,7 +306,7 @@ Example - Set Servo3 to 180 degrees:
 0xC8 | 0xFE | 0xFF | 0xFF
 --- | --- | --- | ---
 
-##### Buzzer Command
+#### Buzzer Command
 Have the buzzer generate a square wave of a given period for a given duration. See the Set All command for more information.
 
 Format:
@@ -332,10 +332,10 @@ Example - Stop the current note:
 ## <a name="FinchBLE"></a>BLE Protocol specific to Finch 2.0
 The Finch 2.0 protocol overrides many of the commands from the stand-alone micro:bit. Inherited commands include the compass calibration command and the commands to start and stop notifications.
 
-##### Advertising Name:
+#### Advertising Name:
 FNXXXXX
 
-##### General Notes:
+#### General Notes:
 - Upon turning the finch on or off, the tail LEDs will show the current battery level. There are 4 possible levels:
   - Four Green Tail LEDs: Completely charged
   - Three Green Tail LEDs: Mostly charged
@@ -351,7 +351,7 @@ FNXXXXX
   - Distance Factor (raw sensor value to cm) = 0.091
 
 
-##### Set All Beak and Tail LEDs plus Buzzer Command
+#### Set All Beak and Tail LEDs plus Buzzer Command
 
 Format (20 bytes):
 
@@ -377,7 +377,7 @@ Example - Beak red, tail green at half intensity, start the buzzer at 220Hz (mid
 0xDO | 0xFF | 0x00 | 0x00 | 0x00 | 0x7D | 0x00 | 0x00 | 0x7D | 0x00 | 0x00 | 0x7D | 0x00 | 0x00 | 0x7D | 0x00 | 0x11 | 0xC1 | 0x00 | 0xC8
 --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 
-##### Set All Motors and micro:bit LED Array Command
+#### Set All Motors and micro:bit LED Array Command
 This command should be used to set the micro:bit LED Array rather than the command for the stand-alone micro:bit.
 
 Format (20 bytes):
@@ -462,19 +462,19 @@ Example - Motors and print:
 --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 
 
-##### Stop All Command
+#### Stop All Command
 Use this command instead of the stand-alone micro:bit command. It will stop the finches motors, LEDs (including the micro:bit LED array), and buzzer.
 
 0xDF |
 --- |
 
-##### Reset Encoders Command
+#### Reset Encoders Command
 Resets the left and right encoder values to zero.
 
 0xD5 |
 --- |
 
-##### Send Firmware Version Command:
+#### Send Firmware Version Command:
 This command will cause a one time response containing the current firmware version information. SAMD Firmware Version is specific to the Finch's internal board.
 
 0xD4 | 0xFF | 0xFF | 0xFF
@@ -486,7 +486,7 @@ micro:bit Hardware Version | micro:bit Firmware Version | SAMD Firmware Version
 --- | --- | ---
 
 
-##### Notifications:
+#### Notifications:
 Sensor data can be received as periodic notifications. The finch uses the same commands to start and stop notifications as the Hummingbird Bit and the stand-alone micro:bit, but the response packet format is different.
 
 Start Notifications Command:
