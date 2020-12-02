@@ -216,6 +216,7 @@ Notes:
 - Magnetometer values are 16-bit values ranging from +/- 30000μT, 2’s complement form. To convert raw values to μT, combine raw bytes and convert to a signed 16-bit integer. Then multiply by 1/10.
 
 ## <a name="BitBLE"></a>BLE Protocol specific to Hummingbird Bit
+The Hummingbird Bit inherits from the stand-alone micro:bit, with the addition of that which is listed below:
 
 ##### Advertising Name:
 BBXXXXX
@@ -223,30 +224,18 @@ BBXXXXX
 ##### Set All Command:
 For most applications, you will want to use this combined command to set the robot state. This allows for a reduction in the number of commands sent overall. Despite the name, this command does not set everything - the LED array on the micro:bit must be set separately.
 
-Format (19 bytes total):
+Format (19 bytes):
 
 0xCA | LED1 | RS | R1 | G1 | B1 | R2 | G2 | B2 | SS1 | SS2 | SS3 | SS4 | LED2 | LED3 | BNM | BNL | BDM | BDL
 --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 
 Values:
- - LED1: Intensity of LED1.
- - RS: Reserved for future use (currently does nothing).
- - R1: Red intensity for Tri-LED1.
- - G1: Green intensity for Tri-LED1.
- - B1: Blue intensity for Tri-LED1.
- - R2: Red intensity for Tri-LED2.
- - G2: Green intensity for Tri-LED2.
- - B2: Blue intensity for Tri-LED2.
- - SS1: Servo1 value.
- - SS2: Servo2 value.
- - SS3: Servo3 value.
- - SS4: Servo4 value.
- - LED2: Intensity of LED2.
- - LED3: Intensity of LED3.
- - BNM: Buzzer note MSB.
- - BNL: Buzzer note LSB.
- - BDM: Buzzer duration MSB.
- - BDL: Buzzer duration LSB.
+ - LED1, LED2, LED3: Intensity of LEDs 1, 2, and 3
+ - RS: Reserved for future use (currently does nothing)
+ - R1, G1, B1, R2, G2, B2: Red, green, or blue intensity for Tri-LED 1 or 2
+ - SS1, SS2, SS3, SS4: Value for servos 1, 2, 3, and 4
+ - BNM, BNL: Buzzer note MSB and LSB.
+ - BDM, BDL: Buzzer duration MSB and LSB.
 
 
  Notes:
@@ -254,6 +243,7 @@ Values:
  - Values set for servos represent the angle (for a position servo) or speed (for a rotation servo). They range from 0x00 to 0xFE. 0xFF is an off state.
  - Buzzer note values are in units of μs (microseconds). Notes given as frequencies must be converted to period. The conversion from frequency in Hz to period in μs is: `period = (1/frequency) * 1000000` Midi note numbers can be converted to frequencies using a simple formula (see https://newt.phys.unsw.edu.au/jw/notes.html): `frequency = 440 * pow(2, (note - 69)/12)`
  - Buzzer duration is in units of ms (milliseconds).
+ - The buzzer can be stopped mid-buzz by setting the frequency to zero and the duration to 1.
  - Except for the buzzer, the set all command components represent a state of the robot. Since the buzzer command is a thing of a certain duration, you want to make sure to only send that command once - at the time you want the buzzing to start. At all other times, the buzzer bytes should all be set to 0x00.
 
 
@@ -334,7 +324,198 @@ Example - Reset value (will not interrupt a buzz in progress):
 0xCD | 0x00 | 0x00 | 0x00 | 0x00
 --- | --- | --- | --- | ---
 
-## <a name="FinchBLE"></a>BLE Protocol specific to Finch 2.0
+Example - Stop the current note:
 
-Advertising Name:
+0xCD | 0x00 | 0x00 | 0x00 | 0x01
+--- | --- | --- | --- | ---
+
+## <a name="FinchBLE"></a>BLE Protocol specific to Finch 2.0
+The Finch 2.0 protocol overrides many of the commands from the stand-alone micro:bit. Inherited commands include the compass calibration command and the commands to start and stop notifications.
+
+##### Advertising Name:
 FNXXXXX
+
+##### General Notes:
+- Upon turning the finch on or off, the tail LEDs will show the current battery level. There are 4 possible levels:
+  - Four Green Tail LEDs: Completely charged
+  - Three Green Tail LEDs: Mostly charged
+  - Two Yellow Tail LEDs: Needs to be charged soon
+  - One Red Tail LED: Needs to be charged immediately
+- Calculations:
+  - Diameter of the wheel = 5.075cm
+  - Wheel 2 Wheel Distance = 10cm
+  - Gear ratio = 1:99
+  - Encoder ticks per revolution = 8
+  - 1cm = 49.700 ticks
+  - 1 degree = 4.335 ticks
+  - Distance Factor (raw sensor value to cm) = 0.091
+
+
+##### Set All Beak and Tail LEDs plus Buzzer Command
+
+Format (20 bytes):
+
+0xDO | BR | BG | BB | T1R | T1G | T1B | T2R | T2G | T2B | T3R | T3G | T3B | T4R | T4G | T4B | BNM | BNL | BDM | BDL
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Values:
+- BR, BG, BB: Beak red, green and blue intensities
+- T1R, T1G, T1B, T2R, T2G, T2B, T3R, T3G, T3B, T4R, T4G, T4B: Red, green or blue intensity for tail LED 1, 2, 3, or 4
+- BNM, BNL: Buzzer note MSB and LSB.
+- BDM, BDL: Buzzer duration MSB and LSB.
+
+
+Notes:
+- All LED intensities range from 0x00 to 0xFF (0 to 255).
+- Buzzer note values are in units of μs (microseconds). Notes given as frequencies must be converted to period. The conversion from frequency in Hz to period in μs is: `period = (1/frequency) * 1000000` Midi note numbers can be converted to frequencies using a simple formula (see https://newt.phys.unsw.edu.au/jw/notes.html): `frequency = 440 * pow(2, (note - 69)/12)`
+- Buzzer duration is in units of ms (milliseconds).
+- The buzzer can be stopped mid-buzz by setting the frequency to zero and the duration to 1.
+- Except for the buzzer, the set all command components represent a state of the robot. Since the buzzer command is a thing of a certain duration, you want to make sure to only send that command once - at the time you want the buzzing to start. At all other times, the buzzer bytes should all be set to 0x00.
+
+Example - Beak red, tail green at half intensity, start the buzzer at 220Hz (midi 57, A3) for 200ms:
+
+0xDO | 0xFF | 0x00 | 0x00 | 0x00 | 0x7D | 0x00 | 0x00 | 0x7D | 0x00 | 0x00 | 0x7D | 0x00 | 0x00 | 0x7D | 0x00 | 0x11 | 0xC1 | 0x00 | 0xC8
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+##### Set All Motors and micro:bit LED Array Command
+This command should be used to set the micro:bit LED Array rather than the command for the stand-alone micro:bit.
+
+Format (20 bytes):
+
+0xD2 | Mode | MLS | MLT1 | MLT2 | MLT3 | MRS | MRT1 | MRT2 | MRT3 | S4/C1 | S3/C2 | S2/C3 | S1/C4 | C5 | C6 | C7 | C8 | C9 | C10
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+
+Values:
+- Mode: Define what data will be sent in this message (see below)
+- MLS, MRS: Left and right motor speeds (see below)
+- MLT1, MLT2, MLT3, MRT1, MRT2, MRT3: The number of ticks for the left and right motors to move. Each value is represented by 3 bytes of data
+- S4, S3, S2, S1: 4 bytes representing a symbol for the LED array
+- C1 ... C10: Bytes representing characters in a flash command
+
+Mode Format (bits):
+
+b7 | b6 | b5 | b4 | b3 | b2 | b1 | b0
+--- | --- | --- | --- | --- | --- | --- | ---
+
+Values:
+- b3b2b1b0: Length of the flash string
+- b7b6b5:
+  - 000: Only flash
+  - 001: Only symbol
+  - 010: Only motors
+  - 011: Motors and symbol
+  - 100: Motors and flash
+
+
+Speed Format (bits):
+
+Dir | s6 | s5 | s4 | s3 | s2 | s1 | s0
+--- | --- | --- | --- | --- | --- | --- | ---
+
+Values:
+- Dir:
+  - 1: Forward
+  - 0: Backward
+- s6s5s4s3s2s1s0: Speed absolute value ranging from 3 to 36
+
+Notes:
+- When using flash only, there is a maximum of 18 characters. When combining flash with motors, the maximum is 10.
+- To set the motors for continuous motion, simply set the ticks to zero.
+- When setting the motors with position control (using the ticks values to make the motors go a specific distance), the behavior is similar to the buzzer - you should only send this command once. Sending such a command a second time will cause the robot to start the motion over.
+- To stop a currently moving finch, set all motor values to 0x00.
+- To send a motor command that does nothing, set speeds to 0x00 and ticks to 1.
+
+Example - Flash "Hello" only:
+
+0xD2 | 0x05 | 0x48 | 0x65 | 0x6C | 0x6C | 0x6F
+--- | --- | --- | --- | --- | --- | ---
+
+Example - Symbol only (all LEDs on):
+
+0xD2 | 0x20 | 0x01 | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | ---
+
+Example - Motors only with velocity control (constant motion backward at top speed):
+
+0xD2 | 0x40 | 0x24 | 0x00 | 0x00 | 0x00 | 0x24 | 0x00 | 0x00 | 0x00
+--- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Example - Motors only with position control (move forward at full speed for 65535 ticks and stop):
+
+0xD2 | 0x40 | 0xA4 | 0x00 | 0xFF | 0xFF | 0xA4 | 0x00 | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Example - Stop the motors:
+
+0xD2 | 0x40 | 0x00 | 0x00 | 0x00 | 0x00 | 0x00 | 0x00 | 0x00 | 0x00
+--- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Example - Motors and symbol:
+
+0xD2 | 0x60 | 0x24 | 0x00 | 0xFF | 0xFF | 0x24 | 0x00 | 0xFF | 0xFF | 0x01 | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Example - Motors and print:
+
+0xD2 | 0x85 | 0x24 | 0x00 | 0xFF | 0xFF | 0x24 | 0x00 | 0xFF | 0xFF | 0x48 | 0x65 | 0x6C | 0x6C | 0x6F
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+
+##### Stop All Command
+Use this command instead of the stand-alone micro:bit command. It will stop the finches motors, LEDs (including the micro:bit LED array), and buzzer.
+
+0xDF |
+--- |
+
+##### Reset Encoders Command
+Resets the left and right encoder values to zero.
+
+0xD5 |
+--- |
+
+##### Send Firmware Version Command:
+This command will cause a one time response containing the current firmware version information. SAMD Firmware Version is specific to the Finch's internal board.
+
+0xD4 | 0xFF | 0xFF | 0xFF
+--- | --- | --- | ---
+
+Response:
+
+micro:bit Hardware Version | micro:bit Firmware Version | SAMD Firmware Version
+--- | --- | ---
+
+
+##### Notifications:
+Sensor data can be received as periodic notifications. The finch uses the same commands to start and stop notifications as the Hummingbird Bit and the stand-alone micro:bit, but the response packet format is different.
+
+Start Notifications Command:
+
+0x62 | 0x67
+--- | ---
+
+Stop Notifications Command:
+
+0x62 | 0x73
+--- | ---
+
+Format of Notifications received (20 bytes):
+
+USM | USL | LightL | LightR | PCF/LineL | LineR | B | EL3 | EL2 | EL1 | ER3 | ER2 | ER1 | AX | AY | AZ | BS | MX | MY | MZ
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Values:
+- USM, USL: Ultrasound distance sensor MSB and LSB
+- LightL, LightR: Left and right light sensors
+- PCF: The position control flag is the first bit of this byte
+- LineL, LineR: Left and right line sensors
+- B: Battery
+- EL3, EL2, EL1, ER3, ER2, ER1: Left and right encoder values. Each value is represented by 3 bytes
+- AX, AY, AZ: X, Y, and Z components of the accelerometer value
+- BS: Button, shake, and compass calibration values
+- MX, MY, MZ: X, Y, and Z components of the magnetometer value
+
+Notes:
+- The left line sensor shares a byte with the position control flag. The first bit is the flag. This must be removed when reading the line sensor value.
+- The position control flag allows you to know when the motors have finished their motion. It is one bit that is set to 1 while the finch is in motion (and attempting to move a specific distance) and 0 otherwise.
+- The button, shake and compass calibration byte is the same as for the stand-alone micro:bit.
