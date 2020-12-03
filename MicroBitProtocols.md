@@ -2,11 +2,15 @@
 
 
 ## Contents
+ - [Introduction](#into)
  - [BLE Protocol for Stand-Alone micro:bit](#sharedBLE)
  - [BLE Protocol specific to Hummingbird Bit](#BitBLE)
  - [BLE Protocol specific to Finch 2.0](#FinchBLE)
+ - [UART Protocol](#UART)
 
 
+## <a name="intro"></a>Introduction
+There are a few options for communication with BirdBrain's micro:bit based products. With BirdBrain's [hex file](https://www.birdbraintechnologies.com/downloads/installers/BBTFirmware.hex) on the micro:bit, you can use the BLE protocol to communicate over bluetooth. If you are using a Hummingbird Bit (or a micro:bit on its own), the BirdBrain hex file also allows for UART communication (communication over a USB connection). Since the Finch 2.0 was designed to be used untethered, it has no UART protocol. If you are making your own hex file (as users of MakeCode do), you will want to use the SPI protocol to communicate with the Hummingbird or Finch components.
 
 ## <a name="sharedBLE"></a>BLE Protocol for Stand-Alone micro:bit
 
@@ -149,7 +153,7 @@ This command will clear the LED array. If used with a Hummingbird Bit, it will a
 
 
 #### Calibrate Magnetometer Command:
-This command will start the magnetometer calibration. Results are received with the rest of the notifications.
+This command will start the magnetometer calibration. This activity is also referred to as 'compass calibration' because a good calibration of the magnetometer is essential for a functioning compass. Results are received with the rest of the notifications.
 
 0xCE | 0xFF | 0xFF | 0xFF
 --- | --- | --- | ---
@@ -190,6 +194,26 @@ Values:
 - AX, AY, AZ: Accelerometer X, Y, and Z
 - BS: Button/Shake
 - MXM, MXL, MYM, MYL, MZM, MZL: Magnetometer X, Y, and Z, MSB and LSB.
+
+Calculating Compass Values:
+The accelerometer and magnetometer can be used together to make a compass. Here is a javascript example showing how to calculate the compass for a Finch 2.0:
+
+```
+const phi = Math.atan(-ay / az)
+const theta = Math.atan(ax / (ay * Math.sin(phi) + az * Math.cos(phi)))
+
+const xp = mx
+const yp = my * Math.cos(phi) - mz * Math.sin(phi)
+const zp = my * Math.sin(phi) + mz * Math.cos(phi)
+
+const xpp = xp * Math.cos(theta) + zp * Math.sin(theta)
+const ypp = yp
+
+const angle = 180.0 + ((Math.atan2(xpp, ypp)) * (180 / Math.PI)) //convert result to degrees
+
+const compass = ((Math.round(angle) + 180) % 360) //turn so that beak points north
+```
+
 
 The Button/Shake byte can be broken down into bits:
 
@@ -336,12 +360,13 @@ The Finch 2.0 protocol overrides many of the commands from the stand-alone micro
 FNXXXXX
 
 #### General Notes:
-- Upon turning the finch on or off, the tail LEDs will show the current battery level. There are 4 possible levels:
+Upon turning the finch on or off, the tail LEDs will show the current battery level. There are 4 possible levels:
   - Four Green Tail LEDs: Completely charged
   - Three Green Tail LEDs: Mostly charged
   - Two Yellow Tail LEDs: Needs to be charged soon
   - One Red Tail LED: Needs to be charged immediately
-- Calculations:
+
+Calculations:
   - Diameter of the wheel = 5.075cm
   - Wheel 2 Wheel Distance = 10cm
   - Gear ratio = 1:99
@@ -349,6 +374,16 @@ FNXXXXX
   - 1cm = 49.700 ticks
   - 1 degree = 4.335 ticks
   - Distance Factor (raw sensor value to cm) = 0.091
+
+A note about accelerometer and magnetometer values: Since the accelerometer and magnetometer are part of the micro:bit, the values returned by the notifications are in the reference frame of the micro:bit. Since the micro:bit sits tilted on the back end of the finch, it may be helpful to translate those values relative to the body of the finch. The apps developed at BirdBrain translate these values such that the compass calculation will work best when the finch is sitting level and read 0 degrees when the finch's beak is pointed north.
+- Equations to convert for the accelerometer:
+  - X-finch = x-micro:bit
+  - Y-finch = y-micro:bit * cos 40° - z-micro:bit * sin 40°
+  - Z-finch = y-micro:bit * sin 40° + z-micro:bit * cos 40°
+- Equations to convert for the magnetometer:
+  - X-finch = x-micro:bit
+  - Y-finch = y-micro:bit * cos 40° + z-micro:bit * sin 40°
+  - Z-finch = z-micro:bit * cos 40° - y-micro:bit * sin 40°
 
 
 #### Set All Beak and Tail LEDs plus Buzzer Command
@@ -519,3 +554,161 @@ Notes:
 - The left line sensor shares a byte with the position control flag. The first bit is the flag. This must be removed when reading the line sensor value.
 - The position control flag allows you to know when the motors have finished their motion. It is one bit that is set to 1 while the finch is in motion (and attempting to move a specific distance) and 0 otherwise.
 - The button, shake and compass calibration byte is the same as for the stand-alone micro:bit.
+- As in the other protocols, accelerometer values are 8-bit values ranging from +/- 2g. They are 2’s complement. To convert the raw values to accelerometer values in meters per second squared, convert the raw byte to a signed 8-bit integer and multiply by 196/1280.
+- Magnetometer values are 8-bit values ranging from +/- 30000μT, 2’s complement form. Values are in units of μT.
+
+
+## <a name="UART"></a>UART Protocol
+This protocol can be used with a Hummingbird Bit or micro:bit connected over USB. The BirdBrain hex file is required.
+
+#### Preferred Time Between Transmits:
+10 ms
+
+#### Baudrate:
+115200
+
+### Write Commands
+Commands that are the same as in the BLE protocol:
+- LED Commands
+- Tri-LED Commands
+- Servo Commands
+- Set All
+
+
+#### Calibrate Magnetometer Command
+This command starts the magnetometer calibration and sends back one sensor response when finished?
+
+0x63 |
+--- |
+
+#### Buzzer Command
+The command works the same way as in the BLE protocol, but the command itself may be different.
+
+0x42 | Note in μs (MSB) | Note in μs (LSB) | Duration in ms (MSB) | Duration in ms (LSB)
+--- | --- | --- | --- | ---
+
+#### LED Array Command
+The command works the same way as in the BLE protocol, but the command itself may be different.
+
+0x6C | Symbol or flash command | ... | ...
+--- | --- | --- | ---
+
+#### Stop All Command
+
+0x53 |
+--- |
+
+### Read Commands
+See the BLE protocol for details about the values received. Results are sent 0.5 ms after receiving the command. Each command is 2 bytes. The first byte is the unicode value of the letter R, and the second is specific to the command.
+
+#### Read Hummingbird Sensor Values
+
+Command (s):
+
+0x52 | 0x73
+--- | ---
+
+Response Format:
+
+S1 | S2 | S3 | B | 0x00 | 0x00
+--- | --- | --- | --- | --- | ---
+
+Values:
+- S1, S2, S3: Values for sensor 1, 2, and 3
+- B: Battery level
+
+#### Read Accelerometer Values
+
+Command (a):
+
+0x52 | 0x61
+--- | ---
+
+Response Format:
+
+X | Y | Z | BS | 0x00 | 0x00
+--- | --- | --- | --- | --- | ---
+
+Values:
+- X, Y, Z: The x, y, and z components of the accelerometer value
+- BS: Button, shake, and calibration result
+
+
+#### Read Magnetometer Values
+
+Command (m):
+
+0x52 | 0x6D
+--- | ---
+
+Response Format:
+
+XMSB | XLSB | YMSB | YLSB | ZMSB | XLSB
+--- | --- | --- | --- | --- | ---
+
+Values:
+- XMSB, XLSB: MSB and LSB of the X component of the magnetometer value
+- YMSB, YLSB: MSB and LSB of the Y component of the magnetometer value
+- ZMSB, ZLSB: MSB and LSB of the Z component of the magnetometer value
+
+#### Read Firmware Version Numbers
+
+Command (f):
+
+0x52 | 0x66
+--- | ---
+
+Response Format:
+
+Hardware version | micro:bit firmware | SAMD firmware | micro:bit/Hummingbird
+--- | --- | --- | ---  
+
+Example response:
+- Hardware Version: 0x01 (old magnetometer, accelerometer), 0x02 (new magnetometer, accelerometer)
+- Firmware Microbit: 0x01
+- Firmware SAMD: 0x02
+- Microbit: 0
+- HummingBit: 1
+
+
+#### Read All
+Use this command to get a response similar to BLE notifications. See the BLE protocol for discussion of the 14 byte response.
+
+Command (C):
+
+0x52 | 0x43
+--- | ---
+
+#### Connection Initialization
+You should hear a connection sound and LEDs should stop flashing. Response will be the same as for the firmware version read request.
+
+Command (o):
+
+0x52 | 0x6F
+--- | ---
+
+Response Format:
+
+Hardware version | micro:bit firmware | SAMD firmware | micro:bit/Hummingbird
+--- | --- | --- | ---
+
+#### Disconnection
+You should hear a disconnection sound and LEDs should start flashing. No response?
+
+Command (x):
+
+0x52 | 0x78
+--- | ---
+
+#### Read Name
+You will receive 7 bytes of the name.
+
+Command (N):
+
+0x52 | 0x4E
+--- | ---
+
+Example response - BB5VWXY (Hummingbird Bit)
+
+0x42 | 0x42 | 0x35 | 0x56 | 0x57 | 0x58 | 0x59
+--- | --- | --- | --- | --- | --- | ---
