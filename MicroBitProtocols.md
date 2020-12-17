@@ -782,7 +782,7 @@ Example - Set Tri-LED1 to blue:
 
 #### Get Firmware Version Command
 
-0x8C | 0x00 | 0xFF | 0xFF
+0x8C | 0xFF | 0xFF | 0xFF
 ---- | ---- | ---- | ----
 
 #### Set All Command
