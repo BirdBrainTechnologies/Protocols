@@ -7,6 +7,8 @@
  - [BLE Protocol specific to Hummingbird Bit](#BitBLE)
  - [BLE Protocol specific to Finch 2.0](#FinchBLE)
  - [UART Protocol](#UART)
+ - [SPI Protocol for Hummingbird Bit](#BitSPI)
+ - [SPI Protocol for Finch 2.0](#FinchSPI)
 
 
 ## <a name="intro"></a>Introduction
@@ -712,3 +714,223 @@ Example response - BB5VWXY (Hummingbird Bit)
 
 0x42 | 0x42 | 0x35 | 0x56 | 0x57 | 0x58 | 0x59
 --- | --- | --- | --- | --- | --- | ---
+
+
+## <a name="BitSPI"></a>SPI Protocol for Hummingbird Bit
+
+#### Overview
+4 Byte protocol (each command is 4 bytes long except the setAll command which is 13 bytes). For an example implementation see https://github.com/BirdBrainTechnologies/pxt-hummingbird-bit/blob/master/custom.ts
+
+#### Master Configuration
+- Digital write pin 16 to 1
+- MOSI: digital pin 15
+- MISO: digital pin 14
+- SCK: digital pin 13
+- spi format: bits=8, mode=0
+- spi frequency: 1000000
+- 1Mhz
+- Mode: 0
+
+#### Non-SPI Commands
+A few of the parts on the hummingbird bit board are controlled directly from the micro:bit pins:
+
+- LED2: Pin 2 (send intensity * 4)
+- LED3: Pin 8 (send intensity * 4)
+- Buzzer: Pin 0 (set as any micro:bit buzzer)
+
+#### LED and Servo Commands
+LED2 and LED3 are controlled directly through micro:bit pins and do not have SPI commands. LED4 is the status LED. LED intensities range from 0 to 255.
+
+Format:
+
+Command | Intensity | 0xFF | 0xFF
+------- | --------- | ---- | ----
+
+Commands:
+- LED1: 0xC0
+- LED4: OxC3
+- Servo1: 0xC6
+- Servo2: 0xC7
+- Servo3: 0xC8
+- Servo4: 0xC9
+
+Example - Turn LED4 off:
+
+0xC3 | 0x00 | 0xFF | 0xFF
+---- | ---- | ---- | ----
+
+#### Tri-LED Commands
+
+Format:
+
+Command | Red intensity | Green intensity | Blue intensity
+------- | ------------- | --------------- | --------------
+
+Commands:
+- Tri-LED1: 0xC4
+- Tri-LED2: 0xC5
+
+Example - Set Tri-LED1 to blue:
+
+0xC4 | 0x00 | 0x00 | 0xFF
+---- | ---- | ---- | ----
+
+#### Stop All Command
+
+0xCB | 0xFF | 0xFF | 0xFF
+---- | ---- | ---- | ----
+
+#### Get Firmware Version Command
+
+0x8C | 0x00 | 0xFF | 0xFF
+---- | ---- | ---- | ----
+
+#### Set All Command
+Instead of setting each item individually, you can also set everything at once by sending a command with the following format:
+
+0xCA | LED1 | LED4 | R1 | G1 | B1 | R2 | G2 | B2 | SS1 | SS2 | SS3 | SS4
+---- | ---- | ---- | -- | -- | -- | -- | -- | -- | --- | --- | --- | ---
+
+#### Get Sensors Command
+
+0xCC | 0x00 | 0x00 | 0x00 | 0x00 | 0x00 | 0x00
+---- | ---- | ---- | ---- | ---- | ---- | ----
+
+#### Response Packets
+All commands return a response packet. The format of those responses are as follows:
+
+Get firmware version response:
+
+0xFF | 0xFF | Hardware version | Firmware version
+---- | ---- | ---- | ----
+
+Set all command response:
+
+Sensor1 | Sensor2 | Sensor3 | Sensor4 | 0x00 | 0x00 | 0x00 | 0x00 | 0x00 | 0x00
+---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ----
+
+Get Sensors response:
+
+Stale Sensor1 | Stale Sensor2 | Sensor3 | Sensor4 | Sensor1 | Sensor2
+---- | ---- | ---- | ---- | ---- | ----
+
+All other commands:
+
+Sensor1 | Sensor2 | Sensor3 | Sensor4
+---- | ---- | ---- | ----
+
+
+## <a name="FinchSPI"></a>SPI Protocol for Finch 2.0
+
+#### Overview
+All commands are 16 bytes and cause a 16 byte response. As with Hummingbird Bit, the finch buzzer is not part of the SPI protocol. It is controlled directly from the micro:bit pin 0. For an example implementation see https://github.com/BirdBrainTechnologies/pxt-finch/blob/master/custom.ts
+
+#### Pins Used
+- Slave Select: 16
+- MOSI: 15
+- MISO: 14
+- SCK: 13
+
+#### SPI Slave Settings:
+- Transfer Mode 0
+- Preferred SCK  1MHz
+
+
+#### SetAll LEDs Command
+This command is the same as the BLE set all command except that the buzzer is not included. LED intensities range from 0 to 255.
+
+Format:
+
+0xD0 | BR | BG | BB | T1R | T1G | T1B | T2R | T2G | T2B | T3R | T3G | T3B | T4R | T4G | T4B
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Values:
+- BR, BG, BB: Beak red, green and blue intensities
+- T1R, T1G, T1B, T2R, T2G, T2B, T3R, T3G, T3B, T4R, T4G, T4B: Red, green or blue intensity for tail LED 1, 2, 3, or 4
+
+
+#### Set Motors Command
+This command is similar to the BLE command, but does not control the micro:bit led array.
+
+Format:
+
+0xD2 | 0xFF | MLS | MLT1 | MLT2 | MLT3 | MRS | MRT1 | MRT2 | MRT3 | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Values:
+- MLS, MRS: Left and right motor speeds (A speed of 0 will turn the motors off)
+- MLT1, MLT2, MLT3, MRT1, MRT2, MRT3: The number of ticks for the left and right motors to move. Each value is represented by 3 bytes of data
+
+#### Set Individual LEDs
+All intensities range from 0 to 255.
+
+Format:
+
+0xD3 | LED_NO | Red | Green | Blue | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+LED_NO:
+- 0: Beak LED
+- 1: Tail LED 1
+- 2: Tail LED 2
+- 3: Tail LED 3
+- 4: Tail LED 4
+
+#### Get All
+Just get the standard response without setting any values.
+
+0xDE | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+#### Stop All
+
+0xDF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+#### Get All Read Encoders
+Get the standard response with offset encoder values.
+
+0xD4 | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+#### Reset Offset Encoders
+This command may not get a response.
+
+0xD5 | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+#### Switch Off System
+This command may not get a response.
+
+0xD6 | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+#### Left-Right Motor
+Emergency use case.
+
+Format:
+
+0xD1 | L_Dir (0/1) | L_Speed (0-100) | R_Dir (0/1) | R_Speed (0-100) | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF | 0xFF
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+#### Response Packets
+All commands return a 16 byte response packet. The encoder values returned by the Read Encoders command have been offset.
+
+Format:
+
+HFW | 0xFF | USM | USL | LightL | LightR | LineL | LineR | B | EL3 | EL2 | EL1 | ER3 | ER2 | ER1 | Sleep
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Values:
+- HFW: Hardware, firmware version, device ID (see below)
+- USM, USL: Ultrasound distance sensor MSB and LSB
+- LightL, LightR: Left and right light sensors
+- LineL, LineR: Left and right line sensors
+- B: Battery
+- EL3, EL2, EL1, ER3, ER2, ER1: Left and right encoder values. Each value is represented by 3 bytes. These values are offset for the Get Encoders Command.
+- Sleep: Sleep notification (not present in the Left-Right Motor Command)
+
+HFW Format (bits):
+
+D3_ID | D2_ID | D1_ID | H2_V | H1_V | F3_V | F2_V | F1_V
+--- | --- | --- | --- | --- | --- | --- | ---
