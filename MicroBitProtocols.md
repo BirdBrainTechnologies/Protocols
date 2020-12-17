@@ -2,7 +2,7 @@
 
 
 ## Contents
- - [Introduction](#into)
+ - [Introduction](#intro)
  - [BLE Protocol for Stand-Alone micro:bit](#sharedBLE)
  - [BLE Protocol specific to Hummingbird Bit](#BitBLE)
  - [BLE Protocol specific to Finch 2.0](#FinchBLE)
