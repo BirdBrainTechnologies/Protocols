@@ -224,7 +224,7 @@ NU | NU | B | A | CCM | CCL | NU | Shake
 
 Values:
 - NU: Not used
-- B, A: Buttons B and A (1 if the button is being pressed)
+- B, A: Buttons B and A (0 if the button is being pressed)
 - CCM, CCL: Compass calibration check most and least significant bit
 - Shake: 1 if the micro:bit is being shaken
 
