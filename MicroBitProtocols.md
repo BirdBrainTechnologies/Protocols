@@ -148,36 +148,43 @@ Next make Pad2 as input:
 
 
 #### Stop All Command:
-This command will clear the LED array. If used with a Hummingbird Bit, it will also switch off the servos, LEDs, and buzzer. The Finch 2.0 has a similar command (but will not recognize this same command).
+This command will clear the LED array. If used with a Hummingbird Bit, it will also switch off the servos, LEDs, and buzzer. The Finch 2.0 has a similar command (but will not recognize this same command). The three trailing 0xFF bytes are optional and ignored by firmware.
 
 0xCB | 0xFF | 0xFF | 0xFF
 --- | --- | --- | ---
 
 
 #### Calibrate Magnetometer Command:
-This command will start the magnetometer calibration. This activity is also referred to as 'compass calibration' because a good calibration of the magnetometer is essential for a functioning compass. Results are received with the rest of the notifications.
+This command will start the magnetometer calibration. This activity is also referred to as 'compass calibration' because a good calibration of the magnetometer is essential for a functioning compass. Results are received with the rest of the notifications. The three trailing 0xFF bytes are optional and ignored by firmware.
 
 0xCE | 0xFF | 0xFF | 0xFF
 --- | --- | --- | ---
 
 #### Send Firmware Version Command:
-This command will cause a one time response containing the current firmware version information. SAMD Firmware Version is specific to the Hummingbird Bit board.
+This command will cause a one time response containing the current firmware version information. SAMD Firmware Version is specific to the Hummingbird Bit board. The three trailing 0xFF bytes are optional and ignored by firmware.
 
 0xCF | 0xFF | 0xFF | 0xFF
 --- | --- | --- | ---
 
-Response:
-
+V1 Response (3 bytes):
 Hardware Version | micro:bit Firmware Version | SAMD Firmware Version
 --- | --- | ---
 
+V2 Response (4 bytes):
+Hardware Version | micro:bit Firmware Version | SAMD Firmware Version | 0x22
+--- | --- | --- | ---
 
 #### Notifications:
-Sensor data can be received as periodic notifications.
+Sensor data can be received as periodic notifications. All v1 micro:bits will use the V1 notification format. V2 micro:bits will organize notifications in V1 or V2 format based on whether they receive 0x67 or 0x70. This allows backward compatibility with software that has not been updated.
 
-Start Notifications Command:
+Start V1 Notifications Command:
 
 0x62 | 0x67
+--- | ---
+
+Start V2 Notifications Command:
+
+0x62 | 0x70
 --- | ---
 
 Stop Notifications Command:
@@ -185,10 +192,15 @@ Stop Notifications Command:
 0x62 | 0x73
 --- | ---
 
-Format of Notifications received (14 bytes):
+V1 Notification Format (14 bytes):
 
 S1 | S2 | S3 | BL | AX | AY | AZ | BS | MXM | MXL | MYM | MYL | MZM | MZL
 --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+V2 Notification Format (16 bytes):
+
+S1 | S2 | S3 | BL | AX | AY | AZ | BS | MXM | MXL | MYM | MYL | MZM | MZL | SL | T
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 
 Values:
 - S1, S2, S3: Sensors 1, 2, and 3.
@@ -196,6 +208,8 @@ Values:
 - AX, AY, AZ: Accelerometer X, Y, and Z
 - BS: Button/Shake
 - MXM, MXL, MYM, MYL, MZM, MZL: Magnetometer X, Y, and Z, MSB and LSB.
+- SL (V2 only): Sound level
+- T (V2 only): Temperature level
 
 Calculating Compass Values:
 The accelerometer and magnetometer can be used together to make a compass. Here is a javascript example showing how to calculate the compass for a Finch 2.0:
@@ -219,11 +233,12 @@ const compass = ((Math.round(angle) + 180) % 360) //turn so that beak points nor
 
 The Button/Shake byte can be broken down into bits:
 
-NU | NU | B | A | CCM | CCL | NU | Shake
+NU | NU | B | A | CCM | CCL | TCH | Shake
 --- | --- | --- | --- | --- | --- | --- | ---
 
 Values:
 - NU: Not used
+- TCH: Touch Sensor (V2 only) (0 if the touch sensor is pressed)
 - B, A: Buttons B and A (0 if the button is being pressed)
 - CCM, CCL: Compass calibration check most and least significant bit
 - Shake: 1 if the micro:bit is being shaken
@@ -278,7 +293,7 @@ Values:
  0xCA | 0x00 | 0xFF | 0x00 | 0x00 | 0xFF | 0x00 | 0xFF | 0x00 | 0xFE | 0xFF | 0xFF | 0xFF | 0x00 | 0x00 | 0x09 | 0xC4 | 0x00 | 0x1E
  --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 
-#### LED Commands
+#### LED Command - THIS COMMAND IS NOT IMPLEMENTED IN ALL FIRMWARE VERSIONS AND SHOULD NOT BE USED
 Intensities range in value from 0x00 to 0xFF (0 to 255).
 
 Format:
@@ -296,7 +311,7 @@ Example - Light LED2 with mid intensity:
 0xC1 | 0x55 | 0xFF | 0xFF
 --- | --- | --- | ---
 
-#### Tri-LED Commands
+#### Tri-LED Command - THIS COMMAND IS NOT IMPLEMENTED IN ALL FIRMWARE VERSIONS AND SHOULD NOT BE USED
 Intensities range in value from 0x00 to 0xFF (0 to 255).
 
 Format:
@@ -313,7 +328,7 @@ Example - Set Tri-LED2 to BirdBrain teal:
 0xC5 | 0x08 | 0x9B | 0xAB
 --- | --- | --- | ---
 
-#### Servo Commands
+#### Servo Command - THIS COMMAND IS NOT IMPLEMENTED IN ALL FIRMWARE VERSIONS AND SHOULD NOT BE USED
 Value (to set angle or speed) ranges from 0x00 to 0xFE. 0xFF is an off state.
 
 Format:
@@ -332,7 +347,7 @@ Example - Set Servo3 to 180 degrees:
 0xC8 | 0xFE | 0xFF | 0xFF
 --- | --- | --- | ---
 
-#### Buzzer Command
+#### Buzzer Command - THIS COMMAND IS NOT IMPLEMENTED IN ALL FIRMWARE VERSIONS AND SHOULD NOT BE USED
 Have the buzzer generate a square wave of a given period for a given duration. See the Set All command for more information.
 
 Format:
@@ -512,23 +527,32 @@ Resets the left and right encoder values to zero.
 --- |
 
 #### Send Firmware Version Command:
-This command will cause a one time response containing the current firmware version information. SAMD Firmware Version is specific to the Finch's internal board.
+This command will cause a one time response containing the current firmware version information. SAMD Firmware Version is specific to the Finch's internal board. The trailing three 0xFF bytes are optional and ignored by firmware.
 
 0xD4 | 0xFF | 0xFF | 0xFF
 --- | --- | --- | ---
 
-Response:
+V1 Response (3 bytes):
 
 micro:bit Hardware Version | micro:bit Firmware Version | SAMD Firmware Version
 --- | --- | ---
 
+V2 Response (4 bytes):
+
+Hardware Version | micro:bit Firmware Version | SAMD Firmware Version | 0x22
+--- | --- | --- | ---
 
 #### Notifications:
-Sensor data can be received as periodic notifications. The finch uses the same commands to start and stop notifications as the Hummingbird Bit and the stand-alone micro:bit, but the response packet format is different.
+Sensor data can be received as periodic notifications. The Finch uses the same commands to start and stop notifications as the Hummingbird Bit and the stand-alone micro:bit, but the response packet format is different.
 
-Start Notifications Command:
+Start V1 Notifications Command:
 
 0x62 | 0x67
+--- | ---
+
+Start V2 Notifications Command:
+
+0x62 | 0x70
 --- | ---
 
 Stop Notifications Command:
@@ -536,17 +560,25 @@ Stop Notifications Command:
 0x62 | 0x73
 --- | ---
 
-Format of Notifications received (20 bytes):
+V1 Notifications Format (20 bytes):
 
 USM | USL | LightL | LightR | PCF/LineL | LineR | B | EL3 | EL2 | EL1 | ER3 | ER2 | ER1 | AX | AY | AZ | BS | MX | MY | MZ
 --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 
+V2 Notifications Format (20 bytes):
+
+SL | US | LightL | LightR | PCF/LineL | LineR | BT | EL3 | EL2 | EL1 | ER3 | ER2 | ER1 | AX | AY | AZ | BS | MX | MY | MZ
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+
+
 Values:
 - USM, USL: Ultrasound distance sensor MSB and LSB
+- US (V2 only): Ultrasound distance sensor single byte response
 - LightL, LightR: Left and right light sensors
 - PCF: The position control flag is the first bit of this byte
 - LineL, LineR: Left and right line sensors
 - B: Battery
+- BT (V2 only): Battery and temperature - the top 6 bits represent the temperature reading, the bottom 2 represent the battery level
 - EL3, EL2, EL1, ER3, ER2, ER1: Left and right encoder values. Each value is represented by 3 bytes
 - AX, AY, AZ: X, Y, and Z components of the accelerometer value
 - BS: Button, shake, and compass calibration values
@@ -555,13 +587,13 @@ Values:
 Notes:
 - The left line sensor shares a byte with the position control flag. The first bit is the flag. This must be removed when reading the line sensor value.
 - The position control flag allows you to know when the motors have finished their motion. It is one bit that is set to 1 while the finch is in motion (and attempting to move a specific distance) and 0 otherwise.
-- The button, shake and compass calibration byte is the same as for the stand-alone micro:bit.
+- The button, shake and compass calibration byte is the same as for the stand-alone micro:bit or Hummingbird.
 - As in the other protocols, accelerometer values are 8-bit values ranging from +/- 2g. They are 2’s complement. To convert the raw values to accelerometer values in meters per second squared, convert the raw byte to a signed 8-bit integer and multiply by 196/1280.
 - Magnetometer values are 8-bit values ranging from +/- 30000μT, 2’s complement form. Values are in units of μT.
 
 
 ## <a name="UART"></a>UART Protocol
-This protocol can be used with a Hummingbird Bit or micro:bit connected over USB. The BirdBrain hex file is required.
+This protocol can be used with a Hummingbird Bit or micro:bit connected over USB. It does not work with Finch. A special BirdBrain hex file is required. This protocol does not work with V2 micro:bits.
 
 #### Preferred Time Between Transmits:
 10 ms
