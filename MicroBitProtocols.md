@@ -25,17 +25,18 @@ MBXXXXX (Where XXXXX is the last 5 characters of the mac address. The first two 
 - Notify UUID (RX characteristic): 6E400003-B5A3-F393-E0A9-E50E24DCCA9E
 
 #### Connection interval:
-20 -- 70 ms
+20 -- 70 ms (V1 micro:bit)
+7.5-- 12.5 ms (V2 micro:bit)
 
 #### Slave latency:
 0\
 Supervision Timeout -- 4 seconds
 
-#### Baudrate:
+#### Baudrate for serial UART mode:
 115200
 
 #### General Notes:
-- The status LED will be attached to voltage. It will blink if voltage drops below 4.7V and be steady above 4.7V.
+- On a Hummingbird, the status LED will blink if voltage drops below 4.7V and be steady above 4.7V.
 
 
 #### LED Array Command:
@@ -91,7 +92,7 @@ Example - Stop flashing or clear the screen. You could turn the screen off simpl
 
 
 #### micro:bit I/O Command:
-For stand-along micro:bit ONLY, this command will send directly to the pads. Pad0 supports a buzzer.
+For stand-alone micro:bit ONLY, this command will set pins 0, 1, and 2, as well as a buzzer attached to pin 0 or built-in.
 
 Format:
 
