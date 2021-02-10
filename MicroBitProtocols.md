@@ -25,8 +25,8 @@ MBXXXXX (Where XXXXX is the last 5 characters of the mac address. The first two 
 - Notify UUID (RX characteristic): 6E400003-B5A3-F393-E0A9-E50E24DCCA9E
 
 #### Connection interval:
-20 -- 70 ms (V1 micro:bit)
-7.5-- 12.5 ms (V2 micro:bit)
+10 -- 70 ms (V1 micro:bit)
+7.5-- 31.25 ms (V2 micro:bit)
 
 #### Slave latency:
 0\
