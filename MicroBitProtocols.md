@@ -574,6 +574,7 @@ SL | US | LightL | LightR | PCF/LineL | LineR | BT | EL3 | EL2 | EL1 | ER3 | ER2
 
 Values:
 - USM, USL: Ultrasound distance sensor MSB and LSB
+- SL (V2 only): Sound level
 - US (V2 only): Ultrasound distance sensor single byte response
 - LightL, LightR: Left and right light sensors
 - PCF: The position control flag is the first bit of this byte
