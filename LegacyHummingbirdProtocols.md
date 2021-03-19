@@ -65,6 +65,6 @@ All commands generating a return report contain a mechanism for matching returne
 you would receive:
 
 n | 0 | 0 | 0 | 0 | 0 | 0 | 0x42
-- | - | - | - | - | - | - | ---
+-- | - | - | - | - | - | - | ---
 
 where n is the value of the sensor on port 1. The last byte can be used as a signature to match the reports in case received reports are received asynchronously.
