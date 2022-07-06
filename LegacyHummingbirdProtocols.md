@@ -9,7 +9,10 @@
 ## <a name="intro"></a>Introduction
 This document covers communication protocols for the original Hummingbird and the Hummingbird Duo. If you are looking for protocols for the Hummingbird Bit (powered by micro:bit), please read [MicroBitProtocols](MicroBitProtocols.md). The same USB protocol is followed by both the original Hummingbird and the Duo. The original Hummingbird had no bluetooth protocol.
 
+Switching the Duo between BLE and USB requires changing the firmware on the board via the [Hummingbird Firmware Burner].
+
 ## <a name="ble"></a>Hummingbird Duo BLE Protocol
+
 
 
 ## <a name="usb"></a>Hummingbird USB Protocol
