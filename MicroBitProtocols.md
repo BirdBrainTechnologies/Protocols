@@ -3,18 +3,18 @@
 
 ## Contents
  - [Introduction](#intro)
- - [BLE Protocol for Stand-Alone micro:bit](#sharedBLE)
- - [BLE Protocol specific to Hummingbird Bit](#BitBLE)
- - [BLE Protocol specific to Finch 2.0](#FinchBLE)
- - [UART Protocol](#UART)
- - [SPI Protocol for Hummingbird Bit](#BitSPI)
- - [SPI Protocol for Finch 2.0](#FinchSPI)
+ - [BLE Protocol for Stand-Alone micro:bit](#shared-ble)
+ - [BLE Protocol specific to Hummingbird Bit](#bit-ble)
+ - [BLE Protocol specific to Finch 2.0](#finch-ble)
+ - [UART Protocol](#uart)
+ - [SPI Protocol for Hummingbird Bit](#bit-spi)
+ - [SPI Protocol for Finch 2.0](#finch-spi)
 
 
 ## <a name="intro"></a>Introduction
 There are a few options for communication with BirdBrain's micro:bit based products. With BirdBrain's [hex file](https://www.birdbraintechnologies.com/downloads/installers/BBTFirmware.hex) on the micro:bit, you can use the BLE protocol to communicate over bluetooth. If you are using a Hummingbird Bit (or a micro:bit on its own), the BirdBrain hex file also allows for UART communication (communication over a USB connection). Since the Finch 2.0 was designed to be used untethered, it has no UART protocol. If you are making your own hex file (as users of MakeCode do), you will want to use the SPI protocol to communicate with the Hummingbird or Finch components.
 
-## <a name="sharedBLE"></a>BLE Protocol for Stand-Alone micro:bit
+## <a name="shared-ble"></a>BLE Protocol for Stand-Alone micro:bit
 
 #### Advertising Name:
 MBXXXXX (Where XXXXX is the last 5 characters of the mac address. The first two letters change to BB for Hummingbird Bit and FN for Finch 2.0)
@@ -257,7 +257,7 @@ Notes:
 - Accelerometer values are 8-bit values ranging from +/- 2g. They are 2’s complement. To convert the raw values to accelerometer values in meters per second squared, convert the raw byte to a signed 8-bit integer and multiply by 196/1280.
 - Magnetometer values are 16-bit values ranging from +/- 30000μT, 2’s complement form. To convert raw values to μT, combine raw bytes and convert to a signed 16-bit integer. Then multiply by 1/10.
 
-## <a name="BitBLE"></a>BLE Protocol specific to Hummingbird Bit
+## <a name="bit-ble"></a>BLE Protocol specific to Hummingbird Bit
 The Hummingbird Bit inherits from the stand-alone micro:bit, with the addition of that which is listed below:
 
 #### Advertising Name:
@@ -371,7 +371,7 @@ Example - Stop the current note:
 0xCD | 0x00 | 0x00 | 0x00 | 0x01
 --- | --- | --- | --- | ---
 
-## <a name="FinchBLE"></a>BLE Protocol specific to Finch 2.0
+## <a name="finch-ble"></a>BLE Protocol specific to Finch 2.0
 The Finch 2.0 protocol overrides many of the commands from the stand-alone micro:bit. Inherited commands include the compass calibration command and the commands to start and stop notifications.
 
 #### Advertising Name:
@@ -594,7 +594,7 @@ Notes:
 - Magnetometer values are 8-bit values ranging from +/- 30000μT, 2’s complement form. Values are in units of μT.
 
 
-## <a name="UART"></a>UART Protocol
+## <a name="uart"></a>UART Protocol
 This protocol can be used with a Hummingbird Bit or micro:bit connected over USB. It does not work with Finch. A special BirdBrain hex file is required. This protocol does not work with V2 micro:bits.
 
 #### Preferred Time Between Transmits:
@@ -750,7 +750,7 @@ Example response - BB5VWXY (Hummingbird Bit)
 --- | --- | --- | --- | --- | --- | ---
 
 
-## <a name="BitSPI"></a>SPI Protocol for Hummingbird Bit
+## <a name="bit-spi"></a>SPI Protocol for Hummingbird Bit
 
 #### Overview
 4 Byte protocol (each command is 4 bytes long except the setAll command which is 13 bytes). For an example implementation see https://github.com/BirdBrainTechnologies/pxt-hummingbird-bit/blob/master/custom.ts
@@ -854,7 +854,7 @@ Sensor1 | Sensor2 | Sensor3 | Sensor4
 ---- | ---- | ---- | ----
 
 
-## <a name="FinchSPI"></a>SPI Protocol for Finch 2.0
+## <a name="finch-spi"></a>SPI Protocol for Finch 2.0
 
 #### Overview
 All commands are 16 bytes and cause a 16 byte response. As with Hummingbird Bit, the finch buzzer is not part of the SPI protocol. It is controlled directly from the micro:bit pin 0. For an example implementation see https://github.com/BirdBrainTechnologies/pxt-finch/blob/master/custom.ts
